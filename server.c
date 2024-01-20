@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <netinet/in.h> // contains defintions for the IP family
@@ -9,10 +10,11 @@
 
 int main()
 {
-    int server_socket_fd, client_socket_fd;
+    int server_socket_fd, client_socket_fd, should_recv_msg = 1, req_body_len;
     struct sockaddr_in server_addr, client_addr;
     socklen_t sin_size;
     char res[1000];
+    void *req_body = malloc(1000);
 
     // create a new socket where the server will run
     if ((server_socket_fd = socket(PF_INET, SOCK_STREAM, 0)) == -1)
@@ -56,6 +58,31 @@ int main()
         strcpy(res, "File Storage Server\n\0");
         send(client_socket_fd, res, 20, 0);
 
+        // receive messages until the client is done
+        while (should_recv_msg)
+        {
+            req_body_len = recv(client_socket_fd, req_body, 1000, 0);
+
+            switch (req_body_len)
+            {
+            case 0:
+                // break out on connection shutdown
+                should_recv_msg = 0;
+                break;
+            case -1:
+                // exit the application if an error occured
+                printf("An error occured when recieving messages");
+                return -1;
+            }
+
+            // add string terminator at the end of the message
+            strcpy(req_body + req_body_len, "\0");
+
+            // add a string
+            printf("Received: %s", (char *)req_body);
+        }
+
+        should_recv_msg = 1; // reset variable that tracks message availabilty
         close(client_socket_fd);
     }
 
