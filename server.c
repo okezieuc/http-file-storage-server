@@ -10,7 +10,7 @@
 
 int main()
 {
-    int server_socket_fd, client_socket_fd, should_recv_msg = 1, req_body_len;
+    int server_socket_fd, client_socket_fd, req_body_len;
     struct sockaddr_in server_addr, client_addr;
     socklen_t sin_size;
     char res[1000];
@@ -59,31 +59,31 @@ int main()
         send(client_socket_fd, res, 20, 0);
 
         // receive messages until the client is done
-        while (should_recv_msg)
+        req_body_len = recv(client_socket_fd, req_body, 1000, 0);
+        while (req_body_len > 0)
         {
-            req_body_len = recv(client_socket_fd, req_body, 1000, 0);
-
-            switch (req_body_len)
-            {
-            case 0:
-                // break out on connection shutdown
-                should_recv_msg = 0;
-                break;
-            case -1:
-                // exit the application if an error occured
-                printf("An error occured when recieving messages");
-                return -1;
-            }
-
             // add string terminator at the end of the message
             strcpy(req_body + req_body_len, "\0");
 
-            // add a string
+            // print the received request as a string
             printf("Received: %s", (char *)req_body);
+            req_body_len = recv(client_socket_fd, req_body, 1000, 0);
         }
 
-        should_recv_msg = 1; // reset variable that tracks message availabilty
+        // if request closed gracefully
+        if (req_body_len == 0)
+        {
+            printf("Client has performed an orderly shutdown");
+        }
+
+        // if an error occurred when receiving a message
+        if (req_body_len == -1)
+        {
+            printf("An error occurred when receiving a message");
+        }
+
         close(client_socket_fd);
+        printf("Request closed");
     }
 
     return 0;
