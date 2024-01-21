@@ -9,15 +9,13 @@
 #define PORT 8000
 
 int send_string(int, char *);
+int handle_request(int);
 
 int main()
 {
-    int server_socket_fd, client_socket_fd, req_body_len, yes = 1;
+    int server_socket_fd, client_socket_fd, yes = 1;
     struct sockaddr_in server_addr, client_addr;
     socklen_t sin_size;
-    char res[1000];
-    void *req_body = malloc(1000);
-    void *http_req_path, *ptr; // will store the requested http path
 
     // create a new socket where the server will run
     if ((server_socket_fd = socket(PF_INET, SOCK_STREAM, 0)) == -1)
@@ -63,53 +61,7 @@ int main()
         // log request info to console
         printf("Received a request from %s:%d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 
-        // receive messages until the client is done
-        req_body_len = recv(client_socket_fd, req_body, 1000, 0);
-        if (req_body_len > 0)
-        {
-            // add string terminator at the end of the message
-            strcpy(req_body + req_body_len, "\0");
-
-            // print the received request as a string
-            printf("Received: %s\n", (char *)req_body);
-
-            // place a string terminator after the request type
-            http_req_path = strstr(req_body, "/");
-            if (http_req_path == NULL)
-            {
-                printf("Invalid HTTP request received\n");
-                break;
-            }
-            strcpy(http_req_path - 1, "\0");
-
-            ptr = strstr(http_req_path, "\r\n");
-            if (ptr == NULL)
-            {
-                printf("Invalid HTTP request received\n");
-                break;
-            }
-
-            strcpy(ptr, "\0\0");
-
-            printf("A %s request was made to the path %s\n", (char *)req_body, (char *)http_req_path);
-            send_string(client_socket_fd, "HTTP/1.0 200 OK\r\n");
-            send_string(client_socket_fd, "Server: File Storage Server\r\n\r\n");
-        }
-
-        // if request closed gracefully
-        if (req_body_len == 0)
-        {
-            printf("Client has performed an orderly shutdown");
-        }
-
-        // if an error occurred when receiving a message
-        if (req_body_len == -1)
-        {
-            printf("An error occurred when receiving a message");
-        }
-
-        shutdown(client_socket_fd, SHUT_RDWR);
-        printf("Request closed");
+        handle_request(client_socket_fd);
     }
 
     return 0;
@@ -118,4 +70,69 @@ int main()
 int send_string(int client_socket_fd, char *str)
 {
     return send(client_socket_fd, str, strlen(str), 0);
+}
+
+int handle_request(int client_socket_fd)
+{
+    int req_body_len;
+    void *ptr, *req_body = malloc(1024);
+
+    // receive messages until the client is done
+    req_body_len = recv(client_socket_fd, req_body, 1024, 0);
+
+    // although an if statement seems like the more appropriate thing to use below, we use
+    // while below for more control over the control flow of the application
+    while (req_body_len > 0)
+    {
+        // add string terminator at the end of the message
+        strcpy(req_body + req_body_len, "\0");
+
+        // print the received request as a string
+        printf("Received: %s\n", (char *)req_body);
+
+        // check that we received a valid HTTP request
+        ptr = strstr(req_body, " HTTP");
+        if (ptr == NULL)
+        {
+            printf("Not a HTTP request.\n");
+            break;
+        }
+        else
+        {
+            // add a string terminator after the request path
+            strcpy(ptr, "\0");
+
+            // check the request type
+            ptr = strstr(req_body, " /");
+
+            // handle POST requests
+            ptr = strstr(req_body, "POST");
+            if (ptr != NULL)
+            {
+                ptr += 5; // move ptr to the start of the path
+                // write POST request handler here
+                break;
+            }
+
+            // point ptr to the request address and do nothing if request is not a GET request
+            if ((ptr = strstr(req_body, "GET")) != NULL)
+            {
+                ptr += 4;
+            }
+            else
+            {
+                printf("Request cannot be handled.");
+                break;
+            }
+
+            printf("A request was made to the path %s\n", (char *)ptr);
+            send_string(client_socket_fd, "HTTP/1.0 200 OK\r\n");
+            send_string(client_socket_fd, "Server: File Storage Server\r\n\r\n");
+        } // end of valid HTTP request
+
+        break; // leave this loop by force
+    }
+
+    shutdown(client_socket_fd, SHUT_RDWR);
+    return 0;
 }
