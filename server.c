@@ -15,6 +15,7 @@ int main()
     socklen_t sin_size;
     char res[1000];
     void *req_body = malloc(1000);
+    void *http_req_path, *ptr; // will store the requested http path
 
     // create a new socket where the server will run
     if ((server_socket_fd = socket(PF_INET, SOCK_STREAM, 0)) == -1)
@@ -66,7 +67,28 @@ int main()
             strcpy(req_body + req_body_len, "\0");
 
             // print the received request as a string
-            printf("Received: %s", (char *)req_body);
+            printf("Received: %s\n", (char *)req_body);
+
+            // place a string terminator after the request type
+            http_req_path = strstr(req_body, "/");
+            if (http_req_path == NULL)
+            {
+                printf("Invalid HTTP request received\n");
+                break;
+            }
+            strcpy(http_req_path - 1, "\0");
+
+            ptr = strstr(http_req_path, "\r\n");
+            if (ptr == NULL)
+            {
+                printf("Invalid HTTP request received\n");
+                break;
+            }
+
+            strcpy(ptr, "\0\0");
+
+            printf("A %s request was made to the path %s\n", (char *)req_body, (char *)http_req_path);
+
             req_body_len = recv(client_socket_fd, req_body, 1000, 0);
         }
 
