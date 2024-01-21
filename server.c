@@ -8,9 +8,11 @@
 
 #define PORT 8000
 
+int send_string(int, char *);
+
 int main()
 {
-    int server_socket_fd, client_socket_fd, req_body_len;
+    int server_socket_fd, client_socket_fd, req_body_len, yes = 1;
     struct sockaddr_in server_addr, client_addr;
     socklen_t sin_size;
     char res[1000];
@@ -22,6 +24,11 @@ int main()
     {
         printf("An error occured while creating a socket");
         return -1;
+    }
+
+    if (setsockopt(server_socket_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
+    {
+        printf("An error occured when setting socket options SO_REUSEADDR");
     }
 
     // construct the server's address object
@@ -56,12 +63,9 @@ int main()
         // log request info to console
         printf("Received a request from %s:%d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 
-        strcpy(res, "File Storage Server\n\0");
-        send(client_socket_fd, res, 20, 0);
-
         // receive messages until the client is done
         req_body_len = recv(client_socket_fd, req_body, 1000, 0);
-        while (req_body_len > 0)
+        if (req_body_len > 0)
         {
             // add string terminator at the end of the message
             strcpy(req_body + req_body_len, "\0");
@@ -88,8 +92,8 @@ int main()
             strcpy(ptr, "\0\0");
 
             printf("A %s request was made to the path %s\n", (char *)req_body, (char *)http_req_path);
-
-            req_body_len = recv(client_socket_fd, req_body, 1000, 0);
+            send_string(client_socket_fd, "HTTP/1.0 200 OK\r\n");
+            send_string(client_socket_fd, "Server: File Storage Server\r\n\r\n");
         }
 
         // if request closed gracefully
@@ -104,9 +108,14 @@ int main()
             printf("An error occurred when receiving a message");
         }
 
-        close(client_socket_fd);
+        shutdown(client_socket_fd, SHUT_RDWR);
         printf("Request closed");
     }
 
     return 0;
+}
+
+int send_string(int client_socket_fd, char *str)
+{
+    return send(client_socket_fd, str, strlen(str), 0);
 }
