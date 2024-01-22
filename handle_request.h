@@ -57,9 +57,6 @@ int handle_request(int client_socket_fd)
                 printf("Request cannot be handled.\n");
                 break;
             }
-
-            send_string(client_socket_fd, "HTTP/1.0 200 OK\r\n");
-            send_string(client_socket_fd, "Server: File Storage Server\r\n\r\n");
         } // end of valid HTTP request
 
         break; // leave this loop by force
