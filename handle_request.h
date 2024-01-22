@@ -11,7 +11,7 @@ int handle_request(int client_socket_fd)
     char *ptr, req_body[1024];
 
     // receive messages until the client is done
-    req_body_len = recv(client_socket_fd, req_body, 1024, 0);
+    req_body_len = recv(client_socket_fd, req_body, 1023, 0);
 
     // although an if statement seems like the more appropriate thing to use below, we use
     // while below for more control over the control flow of the application
@@ -47,7 +47,7 @@ int handle_request(int client_socket_fd)
 
                 // make ptr point to immediately after the resource path
                 ptr += strlen(ptr) + 1;
-                
+
                 handle_post(client_socket_fd, ptr);
                 break;
             }
