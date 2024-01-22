@@ -5,6 +5,7 @@
 #include <netinet/in.h> // contains defintions for the IP family
 #include <unistd.h>     // contains definitions for close()
 #include <arpa/inet.h>  // for interner address conversions
+#include <time.h>
 #include "handle_request.h"
 
 #define PORT 8000
@@ -14,6 +15,8 @@ int main()
     int server_socket_fd, client_socket_fd, yes = 1;
     struct sockaddr_in server_addr, client_addr;
     socklen_t sin_size;
+
+    srand(time(NULL));
 
     // create a new socket where the server will run
     if ((server_socket_fd = socket(PF_INET, SOCK_STREAM, 0)) == -1)

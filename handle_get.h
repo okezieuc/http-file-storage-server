@@ -1,3 +1,6 @@
+#ifndef HANDLE_GET_H
+#define HANDLE_GET_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,3 +44,5 @@ int handle_get(int client_socket_fd, char *path)
     free(resource);
     return 0;
 }
+
+#endif
