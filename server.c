@@ -5,22 +5,26 @@
 #include <netinet/in.h> // contains defintions for the IP family
 #include <unistd.h>     // contains definitions for close()
 #include <arpa/inet.h>  // for interner address conversions
+#include "handle_request.h"
 
 #define PORT 8000
 
 int main()
 {
-    int server_socket_fd, client_socket_fd, req_body_len;
+    int server_socket_fd, client_socket_fd, yes = 1;
     struct sockaddr_in server_addr, client_addr;
     socklen_t sin_size;
-    char res[1000];
-    void *req_body = malloc(1000);
 
     // create a new socket where the server will run
     if ((server_socket_fd = socket(PF_INET, SOCK_STREAM, 0)) == -1)
     {
         printf("An error occured while creating a socket");
         return -1;
+    }
+
+    if (setsockopt(server_socket_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
+    {
+        printf("An error occured when setting socket options SO_REUSEADDR");
     }
 
     // construct the server's address object
@@ -55,35 +59,7 @@ int main()
         // log request info to console
         printf("Received a request from %s:%d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 
-        strcpy(res, "File Storage Server\n\0");
-        send(client_socket_fd, res, 20, 0);
-
-        // receive messages until the client is done
-        req_body_len = recv(client_socket_fd, req_body, 1000, 0);
-        while (req_body_len > 0)
-        {
-            // add string terminator at the end of the message
-            strcpy(req_body + req_body_len, "\0");
-
-            // print the received request as a string
-            printf("Received: %s", (char *)req_body);
-            req_body_len = recv(client_socket_fd, req_body, 1000, 0);
-        }
-
-        // if request closed gracefully
-        if (req_body_len == 0)
-        {
-            printf("Client has performed an orderly shutdown");
-        }
-
-        // if an error occurred when receiving a message
-        if (req_body_len == -1)
-        {
-            printf("An error occurred when receiving a message");
-        }
-
-        close(client_socket_fd);
-        printf("Request closed");
+        handle_request(client_socket_fd);
     }
 
     return 0;
