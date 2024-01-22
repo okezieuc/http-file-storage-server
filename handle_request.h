@@ -3,6 +3,7 @@
 #include <sys/socket.h>
 #include "utils.h"
 #include "handle_get.h"
+#include "handle_post.h"
 
 int handle_request(int client_socket_fd)
 {
@@ -43,6 +44,11 @@ int handle_request(int client_socket_fd)
             {
                 ptr += 5; // move ptr to the start of the path
                 // write POST request handler here
+
+                // make ptr point to immediately after the resource path
+                ptr += strlen(ptr) + 1;
+                
+                handle_post(client_socket_fd, ptr);
                 break;
             }
 
