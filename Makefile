@@ -3,7 +3,7 @@ run: build
 
 build: server.out
 
-server.out: server.c
+server.out: server.c $(wildcard *.h)
 	gcc -o server.out server.c
 
 clean:
