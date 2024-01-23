@@ -48,7 +48,7 @@ int handle_request(int client_socket_fd)
                 // make ptr point to immediately after the resource path
                 ptr += strlen(ptr) + 1;
 
-                handle_post(client_socket_fd, ptr);
+                handle_post(client_socket_fd, ptr, req_body_len);
                 break;
             }
 

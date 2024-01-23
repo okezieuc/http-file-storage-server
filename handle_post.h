@@ -18,11 +18,13 @@
     Returns:
     0 on success.
 */
-int handle_post(int client_socket_fd, char *req_body)
+int handle_post(int client_socket_fd, char *req_body, int received_bytes)
 {
-    char *ptr, c_len_str[50], *content, *new_file_name;
-    int c_len; // content length
+    char *ptr, c_len_str[50], *content, *new_file_name, *buffer;
+    int c_len, new_received_bytes_length; // content length
     FILE *fptr;
+
+    printf("%s\n", req_body);
 
     // get the expected length of the file to upload
     // and allocate memory for the file to be received
@@ -50,8 +52,27 @@ int handle_post(int client_socket_fd, char *req_body)
         ptr += 2;
     }
 
-    // copy content to buffer
-    strncpy(content, ptr, c_len);
+    // find for the number of bytes we have received
+    // we need this to only copy the number of bytes we have received
+    // and to confirm that we have received the whole file
+    received_bytes = received_bytes - (ptr - req_body);
+
+    // copy received content to buffer
+    memcpy(content, ptr, received_bytes);
+
+    // if and until we received enough bytes, receive more data from the client
+    while (received_bytes < c_len)
+    {
+
+        // get new data
+        new_received_bytes_length = recv(client_socket_fd, req_body, 1023, 0);
+
+        // store the data in our buffer
+        memcpy(content + received_bytes, req_body, new_received_bytes_length);
+
+        // update the length of received bytes
+        received_bytes += new_received_bytes_length;
+    }
 
     // save buffer contents in a file
     new_file_name = random_file_name();
