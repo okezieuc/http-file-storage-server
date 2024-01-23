@@ -18,7 +18,7 @@
     Returns:
     0 on success.
 */
-int handle_post(int client_socket_fd, char *req_body, int received_bytes)
+int handle_post(int client_socket_fd, char *req_body, int received_bytes, int ptr_offset)
 {
     char *ptr, c_len_str[50], *content, *new_file_name, *buffer;
     int c_len, new_received_bytes_length; // content length
@@ -55,7 +55,7 @@ int handle_post(int client_socket_fd, char *req_body, int received_bytes)
     // find for the number of bytes we have received
     // we need this to only copy the number of bytes we have received
     // and to confirm that we have received the whole file
-    received_bytes = received_bytes - (ptr - req_body);
+    received_bytes = received_bytes - (ptr - req_body) - ptr_offset;
 
     // copy received content to buffer
     memcpy(content, ptr, received_bytes);

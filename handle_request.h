@@ -7,7 +7,7 @@
 
 int handle_request(int client_socket_fd)
 {
-    int req_body_len;
+    int req_body_len, post_ptr_offset;
     char *ptr, req_body[1024];
 
     // receive messages until the client is done
@@ -45,10 +45,14 @@ int handle_request(int client_socket_fd)
                 ptr += 5; // move ptr to the start of the path
                 // write POST request handler here
 
+                // this gives us the offset to shift away from POST
+                // and the path in the HTTP request.
+                post_ptr_offset = 5 + strlen(ptr) + 1;
+
                 // make ptr point to immediately after the resource path
                 ptr += strlen(ptr) + 1;
 
-                handle_post(client_socket_fd, ptr, req_body_len);
+                handle_post(client_socket_fd, ptr, req_body_len, post_ptr_offset);
                 break;
             }
 
