@@ -20,7 +20,7 @@
 */
 int handle_post(int client_socket_fd, char *req_body, int received_bytes, int ptr_offset)
 {
-    char *ptr, c_len_str[50], *content, *new_file_name, *buffer;
+    char *ptr, c_len_str[50], *content, *new_file_name, *buffer, new_req_body[1024];
     int c_len, new_received_bytes_length; // content length
     FILE *fptr;
 
@@ -62,10 +62,10 @@ int handle_post(int client_socket_fd, char *req_body, int received_bytes, int pt
     while (received_bytes < c_len)
     {
         // get new data
-        new_received_bytes_length = recv(client_socket_fd, req_body, 1023, 0);
+        new_received_bytes_length = recv(client_socket_fd, new_req_body, 1023, 0);
 
         // store the data in our buffer
-        memcpy(content + received_bytes, req_body, new_received_bytes_length);
+        memcpy(content + received_bytes, new_req_body, new_received_bytes_length);
 
         // update the length of received bytes
         received_bytes += new_received_bytes_length;
