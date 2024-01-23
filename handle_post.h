@@ -24,8 +24,6 @@ int handle_post(int client_socket_fd, char *req_body, int received_bytes, int pt
     int c_len, new_received_bytes_length; // content length
     FILE *fptr;
 
-    printf("%s\n", req_body);
-
     // get the expected length of the file to upload
     // and allocate memory for the file to be received
     ptr = strstr(req_body, "Content-Length: ");
@@ -63,7 +61,6 @@ int handle_post(int client_socket_fd, char *req_body, int received_bytes, int pt
     // if and until we received enough bytes, receive more data from the client
     while (received_bytes < c_len)
     {
-
         // get new data
         new_received_bytes_length = recv(client_socket_fd, req_body, 1023, 0);
 
@@ -95,7 +92,7 @@ int handle_post(int client_socket_fd, char *req_body, int received_bytes, int pt
     send_string(client_socket_fd, new_file_name + 7);
 
     free(new_file_name);
-
+    free(content);
     return 0;
 }
 
